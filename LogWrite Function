@@ -1,0 +1,10 @@
+$LogPath = 'C:\Temp\Debug\PrintDrivers.log'                            #sets the path where the logfile will be created
+if ([system.IO.File]::Exists($LogPath)) { Clear-Content $LogPath}      #clears the logfile at the start of each run
+
+Function LogWrite{
+   Param ([string]$logstring)
+     $Timestamp = Get-Date -Format "[MM-dd-yyyy hh:mm:ss]"
+     Add-content $LogPath -value  "$Timestamp $logstring"
+}
+
+LogWrite "starting script"
