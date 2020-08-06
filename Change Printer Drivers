@@ -1,0 +1,32 @@
+  
+$LogPath = 'C:\Temp\Debug\PrintDrivers.log'                 #sets the path where the logfile will be created
+$drivernew = "your driver name here"                        #change the to the name of the driver you want to install, as it appears on the advanced tab of printer properties
+$driverold = '*Canon Generic UFR*'                          #the driver you are looking to replace, again as it appears in the advaned tab of printer properties
+$pattern = 'Canon*'                                         #change this to change the name of the printer you are targeting, this will further filter the list you get from $printers
+$printers = Get-Printer -Name *                             #gets a list of all installed printers/related info  (replacing * with *office*  would find only printers with office in the name)
+                                        
+
+if ([system.IO.File]::Exists($LogPath)) { Clear-Content $LogPath}      #clears the logfile at the start of each run
+
+Function LogWrite{
+   Param ([string]$logstring)
+     $Timestamp = Get-Date -Format "[MM-dd-yyyy hh:mm:ss]"
+     Add-content $LogPath -value  "$Timestamp $logstring"
+}
+
+LogWrite "starting script"
+
+
+foreach($printer in ($printers|Where{$_.Name -like $pattern -and $_.DriverName -like $driverold})){
+    $name = $printer.Name 
+    $olddriver = $printer.DriverName
+    LogWrite "found $name using $olddriver"
+    LogWrite " Attempting to install $drivernew on $name"
+    
+    rundll32 printui.dll PrintUIEntry /Xs /n $name DriverName $drivernew 
+    Start-Sleep -s 10                                       #In my testing if you didnt give it between 5-10 seconds the driver hadn't always finished swapping so it would show a 
+                                                            #false failed install, this time will vary based on the quality of machines you are running it on.     
+    $test = Get-Printer -Name $name 
+        if($test.DriverName -eq $drivernew ){LogWrite "Install successful; found $name using $drivernew" } else {LogWrite "driver install failed"}
+}
+LogWrite "ending script"
